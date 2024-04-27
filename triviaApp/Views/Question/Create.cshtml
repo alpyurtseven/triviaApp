@@ -1,0 +1,70 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@model QuestionViewModel
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="d-flex align-items-center justify-content-center">
+    <div class="card o-hidden border-0 shadow-lg my-5 w-100" style="min-height:400px">
+        <div class="card-body p-0 mt-5 p-5">
+            <form asp-controller="Question" asp-action="Edit" method="post">
+                <input type="hidden" asp-for="Question.Id" value="" />
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="form-group">
+                    <label asp-for="Question.Body">Soru Metni</label>
+                    <textarea asp-for="Question.Body" value="" class="form-control"></textarea>
+                    <span asp-validation-for="Question.Body" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Question.RightAnswer">Doğru Cevap</label>
+                    <input asp-for="Question.RightAnswer" value="" class="form-control" />
+                    <span asp-validation-for="Question.RightAnswer" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Question.WrongAnswer1">Yanlış Cevap 1</label>
+                    <input asp-for="Question.WrongAnswer1" value="" class="form-control" />
+                    <span asp-validation-for="Question.WrongAnswer1" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Question.WrongAnswer2">Yanlış Cevap 2</label>
+                    <input asp-for="Question.WrongAnswer2" value="" class="form-control" />
+                    <span asp-validation-for="Question.WrongAnswer2" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Question.WrongAnswer3">Yanlış Cevap 3</label>
+                    <input asp-for="Question.WrongAnswer3" value="" class="form-control" />
+                    <span asp-validation-for="Question.WrongAnswer3" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Question.Difficulty">Zorluk Derecesi</label>
+                    <input asp-for="Question.Difficulty" value="" class="form-control" />
+                    <span asp-validation-for="Question.Difficulty" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Question.Points">Soru Puanı</label>
+                    <input asp-for="Question.Points" value="" class="form-control" />
+                    <span asp-validation-for="Question.Points" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Question.Time">Soru süresi</label>
+                    <input asp-for="Question.Time" value="" class="form-control" />
+                    <span asp-validation-for="Question.Time" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Question.CategoryId" class="control-label">Kategori</label>
+                    <select asp-for="Question.CategoryId" asp-items="@(new SelectList(Model.Categories, "Id", "Name"))" class="form-control">
+                        <option value="">Kategori Seçiniz</option>
+                    </select>
+                    <span asp-validation-for="Question.CategoryId" class="text-danger"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 mt-5">Kaydet</button>
+            </form>
+
+        </div>
+    </div>
+
+</div>

@@ -1,0 +1,91 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@model CreateCompetitionViewModel
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="d-flex align-items-center justify-content-center">
+    <div class="card o-hidden border-0 shadow-lg my-5 w-100" style="min-height:400px">
+        <div class="card-body p-0 mt-5 p-5">
+            <form asp-controller="Competition" asp-action="Create" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="form-group">
+                    <label asp-for="Competition.Name">Yarışma Adı</label>
+                    <input asp-for="Competition.Name" class="form-control" />
+                    <span asp-validation-for="Competition.Name" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <h4 class="mt-5">Yarışma kategorilerini seçiniz.</h4>
+                    <hr />
+                    @for (int i = 0; i < Model.Categories.Count(); i++)
+                    {
+                        <div class="form-check">
+                            <input type="hidden" asp-for="@Model.Categories[i].CategoryId" value="@Model.Categories[i].CategoryId" />
+                            <input type="hidden" asp-for="@Model.Categories[i].CategoryName" value="@Model.Categories[i].CategoryName" />
+                            <input asp-for="@Model.Categories[i].IsSelected" data-category-id="@Model.Categories[i].CategoryId" class="form-check-input" type="checkbox">
+                            <label class="form-check-label">@Model.Categories[i].CategoryName</label>
+                            <hr />
+                        </div>
+                    }
+                </div>
+
+
+                @foreach (var category in Model.Categories)
+                {
+                    <div id="questions-@category.CategoryId" style="display: none;">
+                        <h5>@category.CategoryName - Kategorisindeki sorular:</h5>
+                        <hr />
+                        @for (int i = 0; i < Model.Questions.Where(q => q.CategoryId == category.CategoryId).Count(); i++)
+                        {
+                            <div class="form-check mt-5">
+                                <input asp-for="@Model.Questions.Where(q => q.CategoryId == category.CategoryId).ToArray()[i].IsSelected" data-question-id="@Model.Questions.Where(q => q.CategoryId == category.CategoryId).ToArray()[i].QuestionId" class="form-check-input" type="checkbox">
+                                <label class="form-check-label">@Model.Questions.Where(q => q.CategoryId == category.CategoryId).ToArray()[i].QuestionId -) @Model.Questions.Where(q => q.CategoryId == category.CategoryId).ToArray()[i].QuestionContent</label>
+                            </div>
+                            <hr />
+                        }
+                    </div>
+                }
+
+                @for (int i = 0; i < Model.Questions.Count(); i++)
+                {
+                    <div class="form-check questions" data-question-id="@Model.Questions[i].QuestionId">
+                        <input type="hidden" asp-for="@Model.Questions[i].QuestionId" value="@Model.Questions[i].QuestionId" />
+                        <input type="hidden" asp-for="@Model.Questions[i].QuestionContent" value="@Model.Questions[i].QuestionContent" />
+                        <input type="hidden" asp-for="@Model.Questions[i].CategoryId" value="@Model.Questions[i].CategoryId" />
+                        <input asp-for="@Model.Questions[i].IsSelected" data-category-id="@Model.Questions[i].CategoryId" class="hiddenQuestion d-none" type="checkbox">
+                    </div>
+                }
+
+                <button type="submit" class="btn btn-primary w-100 mt-5">Yeni Yarışma Oluştur</button>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('input[data-category-id]').forEach(function (checkbox) {
+            checkbox.addEventListener('change', function () {
+                var categoryId = this.getAttribute('data-category-id') || '';
+                var questionsDiv = document.getElementById('questions-' + categoryId);
+
+                questionsDiv.style.display = this.checked ? 'block' : 'none';
+             
+            });
+        });
+
+        document.querySelectorAll('input[data-question-id]').forEach(function (checkbox) {
+            checkbox.addEventListener('change', function () {
+                var questionId = this.getAttribute('data-question-id') || '';
+
+                $('.questions[data-question-id="' + questionId + '"] input[data-category-id]').prop('checked', this.checked);
+            });
+        });
+    })
+
+</script>

@@ -4,8 +4,41 @@
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>519b5bd6-6e51-4527-b34d-c3464e9633b6</UserSecretsId>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'https' " />
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'http' " />
+  <ItemGroup>
+    <None Remove="Views\Admin\" />
+    <None Remove="Views\Auth\" />
+    <None Remove="Views\Category\" />
+    <None Remove="Views\Question\" />
+    <None Remove="Views\Competition\" />
+    <None Remove="Middlewares\" />
+    <None Remove="Utils\" />
+    <None Remove="Views\App\" />
+    <None Remove="Hubs\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Views\Admin\" />
+    <Folder Include="Views\Auth\" />
+    <Folder Include="Views\Category\" />
+    <Folder Include="Views\Question\" />
+    <Folder Include="Views\Competition\" />
+    <Folder Include="Middlewares\" />
+    <Folder Include="Utils\" />
+    <Folder Include="Views\App\" />
+    <Folder Include="Hubs\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.18" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.18">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.18" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="7.0.18" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Core" Version="1.1.0" />
+  </ItemGroup>
 </Project>

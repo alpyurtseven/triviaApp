@@ -1,0 +1,102 @@
+﻿@model List<Competition>
+@{
+    ViewData["Title"] = "Kategori";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="table-responsive">
+    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Yarışma Adı</th>
+                <th>Yarışma Bağlantısı</th>
+                <th>İşlemler</th>
+            </tr>
+        </thead>
+        <tfoot>
+            <tr>
+                <th>Id</th>
+                <th>Kategori Adı</th>
+                <th>Yarışma Bağlantısı</th>
+                <th>İşlemler</th>
+            </tr>
+        </tfoot>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Id</td>
+                    <td>@item.Name</td>
+                    <td>@item.JoinLink</td>
+                    <td>
+                        <a href="/competition/details/@item.Id" class="btn btn-warning btn-circle btn-sm">
+                            <i class="fas fa-edit"></i>
+                        </a>
+
+                        <a data-toggle="modal" data-item-id="@item.Id" data-target="#confirmDeleteModal" class="btn btn-danger btn-circle btn-sm remove-item">
+                            <i class="fas fa-trash"></i>
+                        </a>
+
+                        <a href="/competition/details/@item.Id" class="btn btn-success btn-circle btn-sm">
+                            <i class="fas fa-redo"></i>
+                        </a>
+
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Veri siliyorsunuz.</h5>
+                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body">Bu veriyi silmek istediğinizden emin misiniz?'.</div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" data-dismiss="modal">Vazgeç</button>
+                <buton class="btn btn-danger confirmDelete" onclick="(e) => { removeCategory(e) }">Sil</buton>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        $(document).on("click", ".remove-item", function () {
+            const itemId = $(this).attr('data-item-id');
+            $("#confirmDeleteModal .confirmDelete").attr('data-item-id', itemId);
+        });
+
+        $(document).on("click", ".confirmDelete", function () {
+            const itemId = $(this).attr('data-item-id');
+          
+            if (itemId !== '') {
+                $.ajax({
+                    url: '/Competition/Remove/' + itemId,
+                    type: 'DELETE',
+                    success: function (result) {
+                        window.location.reload();
+                    },
+                    error: function (xhr, status, error) {
+                        window.location.reload();
+                    }
+                });
+            }
+        });
+    });
+</script>
+
+<link href="~/admintemplate/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
+<script src="~/admintemplate/vendor/datatables/jquery.dataTables.min.js"></script>
+<script src="~/admintemplate/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+
+<script src="~/admintemplate/js/demo/datatables-demo.js"></script>

@@ -1,0 +1,290 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    Layout = "~/Views/Shared/_AppLayout.cshtml";
+}
+
+
+<!--USER SECTON-->
+<!--
+Set Username screen
+-->
+<div class="container d-flex flex-column justify-content-center align-items-center setusernamescreen" style="width:100vh; height:100vh">
+    <div class="d-flex flex-column justify-content-center align-items-center">
+        <h1>Tonbalıklımakarna Trivia App</h1>
+        <hr />
+
+        <div class="form-group d-flex flex-column">
+            <input name="Username" id="username" class="form-control" placeholder="Kullanıcı adı" />
+
+            <button class="btn btn-success startCompetition btn-icon-split mt-3 w-100 justify-content-start">
+                <span class="icon text-white-50">
+                    <i class="fas fa-play"></i>
+                </span>
+                <span class="text">Yarışmaya Başla</span>
+            </button>
+
+            <button class="btn btn-info btn-icon-split mt-3 w-100 justify-content-start">
+                <span class="icon text-white-50">
+                    <i class="fas fa-trophy"></i>
+                </span>
+                <span class="text">Son Kazananlar</span>
+            </button>
+
+            <button class="btn btn-warning btn-icon-split mt-3 w-100 justify-content-start">
+                <span class="icon text-white-50">
+                    <i class="fas fa-crown"></i>
+                </span>
+                <span class="text">En yüksek skorlar</span>
+            </button>
+        </div>
+
+    </div>
+</div>
+
+
+<!--
+Waiting room screen
+-->
+<div class="container flex-column justify-content-center align-items-center waitingroomscreen d-none" style="width:100vh; height:100vh;>
+    <div class="d-flex flex-column justify-content-center align-items-center">
+        <h1>Tonbalıklımakarna Trivia App</h1>
+        <hr />
+
+        <div class="d-flex flex-column justify-content-center align-items-center">
+            <h6>Yarışmanın başlatılması bekleniyor.</h6>
+            <div class="p-3">
+                <div class="spinner-grow text-primary" role="status">
+                    <span class="visually-hidden">.</span>
+                </div>
+                <div class="spinner-grow text-secondary" role="status">
+                    <span class="visually-hidden"></span>
+                </div>
+                <div class="spinner-grow text-success" role="status">
+                    <span class="visually-hidden"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-5">
+            <div class="card" style="width: 18rem;">
+                <ul class="list-group list-group-flush participants">
+                    <li class="list-group-item">An item</li>
+                    <li class="list-group-item">A second item</li>
+                    <li class="list-group-item">A third item</li>
+                </ul>
+                <div class="card-footer">
+                    Bağlı kullanıcılar
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!--
+Game category selection screen
+-->
+<div class="container flex-column justify-content-center align-items-center categoryselectionscreen d-none" style="width:100vh; height:100vh;">
+    <div class="mt-5 mb-5">
+        <div class="card">
+            <ul class="d-flex flex-row list-group list-group-flush participantsandScores">
+                <li class="list-group-item"><div class="d-flex flex-column"><span>Yarışmacı Adı: username </span><span>Puan: 0</span></div></li>
+                <li class="list-group-item"><div class="d-flex flex-column"><span>Yarışmacı Adı: username </span><span>Puan: 0</span></div></li>
+                <li class="list-group-item"><div class="d-flex flex-column"><span>Yarışmacı Adı: username </span><span>Puan: 0</span></div></li>
+            </ul>
+            <div class="card-footer text-center align-items-center justify-content-center d-flex">
+                Yarışmacılar
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex flex-column justify-content-center align-items-center">
+        <div class="d-flex flex-column">
+            <h1>Kategori seçiniz.</h1>
+
+            <div class="mt-5 mb-5 d-flex flex-row categorySelectionList">
+                <button class="btn btn-light selectCategory mt-3 w-100 justify-content-start mr-2">
+                    <span class="icon text-white-50">
+                        <i class="fas fa-play"></i>
+                    </span>
+                    <span class="text">Örnek Kategori</span>
+                </button>
+                <button class="btn btn-light selectCategory mt-3 w-100 justify-content-start mr-2">
+                    <span class="icon text-white-50">
+                        <i class="fas fa-play"></i>
+                    </span>
+                    <span class="text">Örnek Kategori 1</span>
+                </button>
+                <button class="btn btn-light selectCategory mt-3 w-100 justify-content-start mr-2">
+                    <span class="icon text-white-50">
+                        <i class="fas fa-play"></i>
+                    </span>
+                    <span class="text">Örnek Kategori 2</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!--
+Question Screen
+-->
+<div class="container flex-column justify-content-center align-items-center q-screen d-none" style="width:100vh; height:100vh;">
+    <div class="mt-5 mb-5">
+        <div class="card questionCard">
+            <ul class="d-flex flex-row list-group list-group-flush participantsandScores">
+                <li class="list-group-item"><div class="d-flex flex-column"><span>Yarışmacı Adı: username </span><span>Puan: 0</span></div></li>
+                <li class="list-group-item"><div class="d-flex flex-column"><span>Yarışmacı Adı: username </span><span>Puan: 0</span></div></li>
+                <li class="list-group-item"><div class="d-flex flex-column"><span>Yarışmacı Adı: username </span><span>Puan: 0</span></div></li>
+            </ul>
+            <div class="card-footer text-center align-items-center justify-content-center d-flex">
+                Yarışmacılar
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex flex-column justify-content-center align-items-center">
+        <div class="d-flex flex-column">
+            <div class="questionPoint mb-5">
+                <span>Puan Değeri: questionPoint</span>
+            </div>
+
+            <div class="d-none nextQuestionAwait flex-column justify-content-center align-items-center">
+                <h6 class="waitText">Yeni soru için bekleniyor.</h6>
+                <div class="p-3 spinners">
+                    <div class="spinner-grow text-primary" role="status">
+                        <span class="visually-hidden">.</span>
+                    </div>
+                    <div class="spinner-grow text-secondary" role="status">
+                        <span class="visually-hidden"></span>
+                    </div>
+                    <div class="spinner-grow text-success" role="status">
+                        <span class="visually-hidden"></span>
+                    </div>
+                </div>
+
+                <div class="mt-5">
+                    <button class="btn btn-info d-none nextQuestion-admin onlyAdmin btn-icon-split mt-3 w-100 justify-content-start">
+                        <span class="icon text-white-50">
+                            <i class="fas fa-play"></i>
+                        </span>
+                        <span class="text">Sonraki Soru</span>
+                    </button>
+                </div>
+
+                <div class="mt-5 mb-5">
+                    <button class="btn btn-info d-none seeResults-admin onlyAdmin btn-icon-split mt-3 w-100 justify-content-start">
+                        <span class="icon text-white-50">
+                            <i class="fas fa-play"></i>
+                        </span>
+                        <span class="text">Sonuçları Görüntüle</span>
+                    </button>
+                </div>
+
+            </div>
+
+            <div class="questionbody rounded border p-5" style="min-height:200px">
+                <span>questionbody</span>
+            </div>
+
+
+            <div class="mt-5 mb-5 d-flex flex-row questionAnswers">
+                <div class="answerSection-1 d-flex flex-column w-100">
+                    <button class="btn btn-light answer mt-3 w-100 justify-content-start mr-2">
+                        <span class="icon text-white-50">
+                            <i class="fas fa-play"></i>
+                        </span>
+                        <span class="text">Örnek Kategori</span>
+                    </button>
+                    <button class="btn btn-light answer mt-3 w-100 justify-content-start mr-2">
+                        <span class="icon text-white-50">
+                            <i class="fas fa-play"></i>
+                        </span>
+                        <span class="text">Örnek Kategori 1</span>
+                    </button>
+                </div>
+                <div class="answerSection-2 d-flex flex-column w-100 ml-2">
+                    <button class="btn btn-light answer mt-3 w-100 justify-content-start mr-2">
+                        <span class="icon text-white-50">
+                            <i class="fas fa-play"></i>
+                        </span>
+                        <span class="text">Örnek Kategori</span>
+                    </button>
+                    <button class="btn btn-light answer mt-3 w-100 justify-content-start mr-2">
+                        <span class="icon text-white-50">
+                            <i class="fas fa-play"></i>
+                        </span>
+                        <span class="text">Örnek Kategori 1</span>
+                    </button>
+                </div>
+            </div>
+
+            <hr />
+
+            <div class="countdown rounded-circle align-self-center text-align-center justify-content-center d-flex align-items-center border border-info w-10" style="height: 150px; width: 150px; font-size: 1.8rem">
+                countdown
+            </div>
+
+
+        </div>
+    </div>
+</div>
+
+
+<!--ADMIN SECTION-->
+<!--
+Admin waiting room screen
+-->
+<div class="container flex-column justify-content-center align-items-center waitingroomscreen-admin d-none" style="width:100vh; height:100vh;>
+    <div class="d-flex flex-column justify-content-center align-items-center">
+        <h1>Tonbalıklımakarna Trivia App</h1>
+        <hr />
+
+        <div class="d-flex flex-column justify-content-center align-items-center">
+            <h6>Yarışmacıların katılması bekleniyor.</h6>
+            <div class="p-3">
+                <div class="spinner-grow text-primary" role="status">
+                    <span class="visually-hidden">.</span>
+                </div>
+                <div class="spinner-grow text-secondary" role="status">
+                    <span class="visually-hidden"></span>
+                </div>
+                <div class="spinner-grow text-success" role="status">
+                    <span class="visually-hidden"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-5">
+            <div class="card" style="width: 18rem;">
+                <ul class="list-group list-group-flush participants">
+                   
+                </ul>
+                <div class="card-footer">
+                    Yarışmacılar
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-5">
+            <button class="btn btn-success startCompetition-admin btn-icon-split mt-3 w-100 justify-content-start">
+                <span class="icon text-white-50">
+                    <i class="fas fa-play"></i>
+                </span>
+                <span class="text">Yarışmayı Başlat</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<script>window.addEventListener('DOMContentLoaded', () => {
+        $('.startCompetition').on('click', () => {
+            const username = ($('#username').val() || '').trim();
+
+            typeof joinGame === 'function' && joinGame(username)
+        });
+    });</script>
