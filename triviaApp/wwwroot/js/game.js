@@ -1,6 +1,376 @@
 ﻿window.competitionId = Number(window.location.search.split('competitionId=').slice(-1)[0].split('&')[0]);
 
 /*HTML TEMPLATES*/
+const getLoader = () => {
+    return `<div bis_skin_checked="1">
+        <div class="spinner-grow text-primary" role="status" bis_skin_checked="1">
+            <span class="visually-hidden"></span>
+        </div>
+        <div class="spinner-grow text-secondary" role="status" bis_skin_checked="1">
+            <span class="visually-hidden"></span>
+        </div>
+        <div class="spinner-grow text-success" role="status" bis_skin_checked="1">
+            <span class="visually-hidden"></span>
+        </div>
+        <div class="spinner-grow text-danger" role="status" bis_skin_checked="1">
+            <span class="visually-hidden"></span>
+        </div>
+        <div class="spinner-grow text-warning" role="status" bis_skin_checked="1">
+            <span class="visually-hidden"></span>
+        </div>
+        <div class="spinner-grow text-info" role="status" bis_skin_checked="1">
+            <span class="visually-hidden"></span>
+        </div>
+        <div class="spinner-grow text-primary" role="status" bis_skin_checked="1">
+            <span class="visually-hidden"></span>
+        </div>
+        <div class="spinner-grow text-dark" role="status" bis_skin_checked="1">
+            <span class="visually-hidden"></span>
+        </div>
+    </div>`;
+}
+
+const getSetUserNameScreen = () => {
+    return `<div class="setusernamescreen">
+        <div class="d-flex flex-column justify-content-center align-items-center">
+            <h1>Tonbalıklımakarna Trivia App</h1>
+            <hr />
+
+            <div class="form-group d-flex flex-column">
+                <input name="Username" id="username" class="form-control" placeholder="Kullanıcı adı" />
+
+                <button class="btn btn-success startCompetition btn-icon-split mt-3 w-100 justify-content-start">
+                    <span class="icon text-white-50">
+                        <i class="fas fa-play"></i>
+                    </span>
+                    <span class="text">Yarışmaya Katıl</span>
+                </button>
+
+                <button class="btn btn-info btn-icon-split mt-3 w-100 justify-content-start">
+                    <span class="icon text-white-50">
+                        <i class="fas fa-trophy"></i>
+                    </span>
+                    <span class="text">Son Kazananlar</span>
+                </button>
+
+                <button class="btn btn-warning btn-icon-split mt-3 w-100 justify-content-start">
+                    <span class="icon text-white-50">
+                        <i class="fas fa-crown"></i>
+                    </span>
+                    <span class="text">En yüksek skorlar</span>
+                </button>
+            </div>
+
+        </div>
+    </div>`;
+};
+
+const getWaitingRoomScreen = (participantList) => {
+    const participants = !(participantList || []).length ? '' : participantList.map((participant) => {
+        return `<li class="list-group-item">${participant.key}</li>`;
+    });
+
+    return `<div class="waitingroomscreen">
+     <div class="d-flex flex-column justify-content-center align-items-center">
+            <h1>Tonbalıklımakarna Trivia App</h1>
+            <hr />
+
+            <div class="d-flex flex-column justify-content-center align-items-center">
+                <h6>Yarışmanın başlatılması bekleniyor.</h6>
+                <div class="p-3">
+                    <div class="spinner-grow text-primary" role="status">
+                        <span class="visually-hidden">.</span>
+                    </div>
+                    <div class="spinner-grow text-secondary" role="status">
+                        <span class="visually-hidden"></span>
+                    </div>
+                    <div class="spinner-grow text-success" role="status">
+                        <span class="visually-hidden"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-5">
+                <div class="card" style="width: 18rem;">
+                    <ul class="list-group list-group-flush participants">
+                        ${(participants || []).join('')}
+                    </ul>
+                    <div class="card-footer">
+                        Bağlı kullanıcılar
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>`;
+};
+
+const getCategorySelectionScreen = (competition) => {
+    const parsedCompetition = JSON.parse(competition) || {};
+    const categoriesThatHasNoQuestion = JSON.parse(localStorage.getItem('categoriesThatHasNoQuestion') || '[]') || [];
+    const categories = parsedCompetition.CompetitionCategories.map((competitionCategory) => {
+        selectCategoryTemplate = getSelectCategoryTemplate();
+
+        if (categoriesThatHasNoQuestion.includes(competitionCategory.Category.Id)) {
+            selectCategoryTemplate = selectCategoryTemplate.replace('isDisabledAttr', 'disabled');
+        }
+
+        selectCategoryTemplate = selectCategoryTemplate.replace('categoryname', competitionCategory.Category.Name);
+        selectCategoryTemplate = selectCategoryTemplate.replace('categoryid', competitionCategory.Category.Id);
+
+        return selectCategoryTemplate;
+    });
+
+
+    return `<div class="categoryselectionscreen">
+        <div class="mt-5 mb-5">
+            <div class="card">
+                <ul class="d-flex flex-row list-group list-group-flush participantsandScores">
+                    <li class="list-group-item"><div class="d-flex flex-column"><span>Yarışmacı Adı: username </span><span>Puan: 0</span></div></li>
+                    <li class="list-group-item"><div class="d-flex flex-column"><span>Yarışmacı Adı: username </span><span>Puan: 0</span></div></li>
+                    <li class="list-group-item"><div class="d-flex flex-column"><span>Yarışmacı Adı: username </span><span>Puan: 0</span></div></li>
+                </ul>
+                <div class="card-footer text-center align-items-center justify-content-center d-flex">
+                    Yarışmacılar
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex flex-column justify-content-center align-items-center">
+            <div class="d-flex flex-column">
+                <h1>Kategori seçiniz.</h1>
+
+                <div class="mt-5 mb-5 d-flex flex-row categorySelectionList">
+                   ${(categories || []).join('')}
+                </div>
+            </div>
+        </div>
+    </div>`;
+};
+
+const getQuestionScreen = (question) => {
+    let templates = [];
+
+    question = JSON.parse(question || '{}') || {};
+
+    window.ra = btoa(encodeURIComponent(question.RightAnswer));
+
+    templates.push(getAnswerTemplate().replace('questionid', question.Id).replace('answertextattr', question.RightAnswer).replace('answertextshow', question.RightAnswer).replace('answertextattrshow', question.RightAnswer));
+
+    for (let i = 0; i < 3; i++) {
+        templates.push(getAnswerTemplate().replace('questionid', question.Id).replace('answertextattr', question[`WrongAnswer${i + 1}`]).replace('answertextshow', question[`WrongAnswer${i + 1}`]).replace('answertextattrshow', question[`WrongAnswer${i + 1}`]));
+    }
+
+
+    templates = shuffle(templates);
+
+    return `<div class="q-screen">
+        <div class="mt-5 mb-5 mt-5 mb-5 d-flex justify-content-center">
+            <div class="card questionCard">
+                <ul class="d-flex flex-row list-group list-group-flush participantsandScores">
+                    <li class="list-group-item"><div class="d-flex flex-column"><span>Yarışmacı Adı: username </span><span>Puan: 0</span></div></li>
+                    <li class="list-group-item"><div class="d-flex flex-column"><span>Yarışmacı Adı: username </span><span>Puan: 0</span></div></li>
+                    <li class="list-group-item"><div class="d-flex flex-column"><span>Yarışmacı Adı: username </span><span>Puan: 0</span></div></li>
+                </ul>
+                <div class="card-footer text-center align-items-center justify-content-center d-flex">
+                    Yarışmacılar
+                </div>
+            </div>
+        </div>
+
+        <div class="nextQuestionAwait d-none justify-content-center align-items-center flex-column">
+            <h3 class="waitText">Yöneticinin yarışmayı devam ettirmesi bekleniyor.</h3>
+
+            <div bis_skin_checked="1" class="spinners">
+                <div class="spinner-grow text-primary" role="status" bis_skin_checked="1">
+                    <span class="visually-hidden"></span>
+                </div>
+                <div class="spinner-grow text-secondary" role="status" bis_skin_checked="1">
+                    <span class="visually-hidden"></span>
+                </div>
+                <div class="spinner-grow text-success" role="status" bis_skin_checked="1">
+                    <span class="visually-hidden"></span>
+                </div>
+            </div>
+
+            <div class="onlyAdmin mt-5 d-none justify-content-center align-items-center">
+                <button class="btn btn-info btn-icon-split mt-3 w-100 justify-content-start nextQuestion-admin d-flex">
+                    <span class="icon text-white-50">
+                        <i class="fas fa-play"></i>
+                    </span>
+                    <span class="text">Sonraki soru</span>
+                </button>
+                <button class="btn btn-warning btn-icon-split mt-3 w-100 justify-content-start seeResults-admin d-none">
+                    <span class="icon text-white-50">
+                        <i class="fas fa-play"></i>
+                    </span>
+                    <span class="text">Sonuçları görüntüle</span>
+                </button>
+            </div>
+        </div>
+
+       
+
+        <div class="d-flex flex-column justify-content-center align-items-center">
+            <div class="d-flex flex-column">
+                <div class="questionPoint mb-5">
+                    <span>Puan Değeri:  ${question.Points}</span>
+                </div>
+
+                <div class="questionbody rounded border p-5" style="min-height:200px">
+                    <span>${question.Body}</span>
+                </div>
+
+                <div class="mt-5 mb-5 d-flex flex-row questionAnswers">
+                    <div class="answerSection-1 d-flex flex-column w-100">
+                       ${templates.slice(0,2).join('')}
+                    </div>
+                    <div class="answerSection-2 d-flex flex-column w-100 ml-2">
+                        ${templates.slice(2, 4).join('')}
+                    </div>
+                </div>
+                <hr />
+                <div class="countdown rounded-circle align-self-center text-align-center justify-content-center d-flex align-items-center border border-info w-10" style="height: 150px; width: 150px; font-size: 1.8rem">
+                    ${question.Time}
+                </div>
+            </div>
+        </div>
+    </div>`;
+};
+
+const getAdminWaitingroomScreen = (participantList) => {
+    const participants = !(participantList || []).length  ? '' : participantList.map((participant) => {
+        return `<li class="list-group-item">${participant.key}</li>`;
+    });
+
+    return `<div class="waitingroomscreen-admin">
+        <div class="d-flex flex-column justify-content-center align-items-center">
+            <h1>Tonbalıklımakarna Trivia App</h1>
+            <hr />
+
+            <div class="d-flex flex-column justify-content-center align-items-center">
+                <h6>Yarışmacıların katılması bekleniyor.</h6>
+                <div class="p-3">
+                    <div class="spinner-grow text-primary" role="status">
+                        <span class="visually-hidden">.</span>
+                    </div>
+                    <div class="spinner-grow text-secondary" role="status">
+                        <span class="visually-hidden"></span>
+                    </div>
+                    <div class="spinner-grow text-success" role="status">
+                        <span class="visually-hidden"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-5">
+                <div class="card" style="width: 18rem;">
+                    <ul class="list-group list-group-flush participants">
+                        ${(participants || []).join('')}
+                    </ul>
+                    <div class="card-footer">
+                        Yarışmacılar
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-5">
+                <button class="btn btn-success startCompetition-admin btn-icon-split mt-3 w-100 justify-content-start">
+                    <span class="icon text-white-50">
+                        <i class="fas fa-play"></i>
+                    </span>
+                    <span class="text">Yarışmayı Başlat</span>
+                </button>
+            </div>
+        </div>
+    </div>`
+};
+
+const getSeeResultsScreen = (results) => {
+    const parsedResults = JSON.parse(results) || [];
+
+    parsedResults.sort(function (a, b) {
+        return b.Points - a.Points;
+    });
+
+    const resultsHtml = parsedResults.map((result, index) => {
+        const winner = index === 0 ? 'bg-success' : ''
+        const winnerIcon = index === 0 ? '<span class="fas fa-crown text-white d-flex justify-content-center"></span>' : '';
+
+        return `<li class="list-group-item ${winner}"><div class="d-flex flex-column">${winnerIcon}<span>Yarışmacı Adı: ${result.Username} </span><span>Puan: ${result.Points}</span></div></li>`;
+    });
+
+
+    return `<div class="seeresultsscreen">
+        <div class="mt-5 mb-5 d-flex justify-content-center align-items-center flex-column">
+            <div class="card">
+                <ul class="d-flex flex-column list-group list-group-flush participantsandScores">
+                    ${resultsHtml.join('')}
+                </ul>
+                <div class="card-footer text-center align-items-center justify-content-center d-flex">
+                    Yarışma Sıralaması
+                </div>
+            </div>
+        </div>
+    </div>`;
+};
+
+const updateAppState = (state, info) => {
+    const mainContainer = document.getElementById('appContainer');
+
+    switch (state) {
+        case 'loader':
+            document.cookie = 'currentState=loader;path=/';
+            localStorage.setItem('currentState', 'loader');
+            mainContainer.innerHTML = getLoader();
+            break;
+        case 'setusername':
+            document.cookie = 'currentState=setusername;path=/';
+            localStorage.setItem('currentState', 'setusername');
+            mainContainer.innerHTML = getSetUserNameScreen();
+
+            $('.startCompetition').off('click').on('click', () => {
+                const username = ($('#username').val() || '').trim();
+
+                typeof joinGame === 'function' && joinGame(username)
+            });
+            break;
+        case 'selectcategory':
+            document.cookie = 'currentState=selectcategory;path=/';
+            localStorage.setItem('currentState', 'selectcategory');
+            mainContainer.innerHTML = getCategorySelectionScreen(info);
+
+            bindSelectCategoryClick();
+            break;
+        case 'waitingroom':
+            document.cookie = 'currentState=waitingroom;path=/';
+            localStorage.setItem('currentState', 'waitingroom');
+            mainContainer.innerHTML = getWaitingRoomScreen(info);
+            break;
+        case 'question':
+            document.cookie = 'currentState=question;path=/';
+            localStorage.setItem('currentState', 'question');
+            mainContainer.innerHTML = getQuestionScreen(info);
+
+            removeParticipantsListBackgrounds();
+            UpdateParticipantsScores();
+            bindAnswerClick();
+            break;
+        case 'adminwaitingroom':
+            document.cookie = 'currentState=adminwaitingroom;path=/';
+            localStorage.setItem('currentState', 'adminwaitingroom');
+            mainContainer.innerHTML = getAdminWaitingroomScreen(info);
+
+            $('.startCompetition-admin').off('click').on('click', () => {
+                typeof startGame === 'function' && startGame();
+            });
+            break;
+        case 'seeresults':
+            document.cookie = 'currentState=seeresults;path=/';
+            localStorage.setItem('currentState', 'seeresults');
+            mainContainer.innerHTML = getSeeResultsScreen(info);
+            break;
+    }
+}
 
 const getSelectCategoryTemplate = () => {
     return `<button class="btn btn-light selectCategory mt-3 w-100 justify-content-start mr-2" data-category-id="categoryid" isDisabledAttr>
@@ -11,14 +381,12 @@ const getSelectCategoryTemplate = () => {
             </button>`;
 }
 
-
 const getAnswerTemplate = () => {
     return `<button class="btn btn-light answer mt-3 w-100 justify-content-start border border-dark mr-2" data-question-id="questionid" data-answer-text="answertextattr">
                 <span class="text">answertextshow</span>
             </button>
             <div id="responseContainer" data-answer-text-show="answertextattrshow" class="mt-2 d-flex" style="min-height:25px;max-height:25px;"></div>`;
 }
-
 
 /*SingalR Events*/
 
@@ -68,7 +436,6 @@ const startConnection = async () => {
             onReceiveParticipantsScores();
             onError();
             onSetYourTurn();
-            onPresentQuestion();
             onSendCategoriesThatHasNoQuestion();
             onSetTime();
             onEndTime();
@@ -77,6 +444,7 @@ const startConnection = async () => {
             onAdminJoined();
             onUserAnswer()
             onQuestionTimeEnded();
+            onReceiveUIUpdate();
         });
     } catch {
         setTimeout(() => startConnection(), 2000);
@@ -85,9 +453,9 @@ const startConnection = async () => {
 
 const joinGame = (username) => {
     window.connection.invoke("SetUsername", username, window.competitionId).then((response) => {
-        $('.setusernamescreen').remove();
-        $('.waitingroomscreen').addClass('d-flex');
-        $('.waitingroomscreen').removeClass('d-none');
+        localStorage.setItem('myUserName', username);
+        document.cookie = 'myUserName=' + username +';path=/';
+
     }).catch(function (err) {
         return console.error(err.toString());
     });
@@ -111,10 +479,6 @@ const answerQuestion = (username, questionid, answer, competitionId) => {
 
 const onAdminJoined = () => {
     connection.on("AdminJoined", () => {
-        $('.setusernamescreen').remove();
-        $('.waitingroomscreen-admin').addClass('d-flex');
-        $('.waitingroomscreen-admin').removeClass('d-none');
-
         $('.onlyAdmin').removeClass('d-none');
 
         window.isAdmin = true;
@@ -138,15 +502,21 @@ const onInvalidLink = () => {
 
 const onStartGame = () => {
     connection.on("StartGame", (competition) => {
-        $('.waitingroomscreen').remove();
-        $('.waitingroomscreen-admin').remove();
-
         removeParticipantsListBackgrounds();
 
         window.localStorage.removeItem('categoriesThatHasNoQuestion');
 
-        showCategorySelectionScreen(competition);
         setParticipants(JSON.parse(window.localStorage.getItem('participants')))
+    });
+}
+
+const onReceiveUIUpdate = () => {
+    connection.on("ReceiveUIUpdate", (state, info, changeScreen) => {
+        if (changeScreen) {
+            updateAppState(state, info);
+        } else if (localStorage.getItem('currentState') === state) {
+            updateAppState(state, info);
+        }
     });
 }
 
@@ -194,7 +564,9 @@ const onQuestionResults = () => {
 
 
             if (window.isAdmin) {
-                $('.nextQuestion-admin').addClass('d-none')
+                $('.seeResults-admin').addClass('d-flex');
+                $('.nextQuestion-admin').removeClass('d-flex');
+                $('.nextQuestion-admin').addClass('d-none');
                 $('.seeResults-admin').removeClass('d-none');
             }
         } else if (!$('.seeResults-admin').hasClass('d-none')) {
@@ -206,10 +578,21 @@ const onQuestionResults = () => {
         UpdateParticipantsScores();
         changeAnswersBackground();
 
+        if (window.isAdmin) {
+            $('.onlyAdmin').addClass('d-flex')
+            $('.onlyAdmin').removeClass('d-none');
+        }
+
         $('.nextQuestionAwait').removeClass('d-none');
         $('.nextQuestionAwait').addClass('d-flex');
 
-       
+        $('.nextQuestion-admin').off('click').on('click', () => {
+            typeof nextQuestion === 'function' && nextQuestion();
+        });
+
+        $('.seeResults-admin').off('click').on('click', () => {
+            typeof showResults === 'function' && showResults();
+        });
 
         corrects.map((username) => {
             answers.push({
@@ -235,58 +618,6 @@ const onQuestionResults = () => {
                 $('[data-participant-name="' + answerObject.name + '"]').closest('li').addClass('text-white');
             }
         });
-    });
-}
-
-const onPresentQuestion = () => {
-    connection.on("PresentQuestion", (question) => {
-        removeParticipantsListBackgrounds();
-        $('.countdown').css('visibility', 'visible');
-        $('.questionPoint').css('visibility', 'visible');
-
-        $('.nextQuestionAwait').addClass('d-none');
-        $('.nextQuestionAwait').removeClass('d-flex');
-
-        const templates = [];
-
-        question = JSON.parse(question || '{}') || {};
-
-        window.ra = btoa(encodeURIComponent(question.RightAnswer));
-
-        $('.questionbody span').text(question.Body);
-
-        templates.push(getAnswerTemplate().replace('questionid', question.Id).replace('answertextattr', question.RightAnswer).replace('answertextshow', question.RightAnswer).replace('answertextattrshow', question.RightAnswer));
-
-
-        for (let i = 0; i < 3; i++) {
-            templates.push(getAnswerTemplate().replace('questionid', question.Id).replace('answertextattr', question[`WrongAnswer${i + 1}`]).replace('answertextshow', question[`WrongAnswer${i + 1}`]).replace('answertextattrshow', question[`WrongAnswer${i + 1}`]));
-        }
-
-
-        $('.answerSection-1 >').remove();
-        $('.answerSection-2 >').remove();
-
-        shuffle(templates).map((answer, index) => {
-            if (index < 2) {
-                $('.answerSection-1').append($(answer));
-            } else {
-                $('.answerSection-2').append($(answer));
-            }
-        });
-
-
-        $('.categoryselectionscreen').addClass('d-none');
-        $('.categoryselectionscreen').removeClass('d-flex');
-
-        $('.questionPoint span').text('Puan Değeri: ' + question.Points);
-
-        UpdateParticipantsScores();
-        bindAnswerClick();
-
-        setTimeout(() => {
-            $('.q-screen').addClass('d-flex');
-            $('.q-screen').removeClass('d-none');
-        }, 100);
     });
 }
 
@@ -338,10 +669,6 @@ const onSendCategoriesThatHasNoQuestion = () => {
 
 const onNextQuestion = () => {
     connection.on("NextQuestion", (competition) => {
-        $('.q-screen').addClass('d-none');
-
-        showCategorySelectionScreen(competition);
-
         UpdateParticipantsScores();
     });
 };
@@ -375,13 +702,13 @@ const onReceiveParticipantsScores = () => {
         $('.participantsandScores').each((index, scoresDiv) => {
             JSON.parse(participantsScores).forEach(score => {
                 if (firstVisit) {
-                    scoresDiv.innerHTML += ` <li class="list-group-item border-right"><div class="d-flex flex-column"><span data-participant-name="${score.Username}">Yarışmacı Adı: ${score.Username} </span><span>Puan:  ${score.Points}</span></div></li>`;
+                    scoresDiv.innerHTML += `<li class="list-group-item border-right"><div class="d-flex flex-column"><span data-participant-name="${score.Username}">Yarışmacı Adı: ${score.Username} </span><span>Puan:  ${score.Points}</span></div></li>`;
                 } else {
                     $('[data-participant-name="' + score.Username + '"]').closest('li').find('span:last-child').text(`Puan: ${score.Points}`);
                 }
             });
 
-            if ($('.categoryselectionscreen').hasClass('d-flex')) {
+            if (localStorage.getItem('currentState') === 'selectcategory') {
                 removeParticipantsListBackgrounds();
 
                 $('[data-participant-name="' + nextParticipant + '"]').closest('li').addClass('bg-info');
@@ -418,7 +745,7 @@ const startGame = () => {
 }
 
 const checkAllAnswers = () => {
-    window.connection.invoke("CheckAllAnswers", window.competitionId, Number($('[data-question-id]').attr('data-question-id')),true).then((response) => {
+    window.connection.invoke("CheckAllAnswers", window.competitionId, Number($('[data-question-id]').attr('data-question-id')), true, false).then((response) => {
      
     }).catch(function (err) {
         return console.error(err.toString());
@@ -427,6 +754,15 @@ const checkAllAnswers = () => {
 
 const nextQuestion = () => {
     window.connection.invoke("NextQuestion").then((response) => {
+        console.log('Next question invoked');
+    }).catch(function (err) {
+        return console.error(err.toString());
+    });
+}
+
+
+const showResults = () => {
+    window.connection.invoke("ShowResults", window.competitionId).then((response) => {
         console.log('Next question invoked');
     }).catch(function (err) {
         return console.error(err.toString());
@@ -481,46 +817,12 @@ const removeParticipantsListBackgrounds = (check) => {
     $('.participantsandScores li').removeClass('text-white');
 }
 
-const showCategorySelectionScreen = (competition) => {
-    var parsedCompetition = JSON.parse(competition) || {};
-    const categoriesThatHasNoQuestion = JSON.parse(localStorage.getItem('categoriesThatHasNoQuestion') || '[]') || [];
-
-    $('.categorySelectionList').children().remove();
-
-
-    parsedCompetition.CompetitionCategories.map((competitionCategory) => {
-        selectCategoryTemplate = getSelectCategoryTemplate();
-
-        if (categoriesThatHasNoQuestion.includes(competitionCategory.Category.Id)) {
-            selectCategoryTemplate = selectCategoryTemplate.replace('isDisabledAttr', 'disabled');
-        }
-
-        selectCategoryTemplate = selectCategoryTemplate.replace('categoryname', competitionCategory.Category.Name);
-        selectCategoryTemplate = selectCategoryTemplate.replace('categoryid', competitionCategory.Category.Id);
-
-        $('.categorySelectionList').append($(selectCategoryTemplate));
-    });
-
-    $('.categoryselectionscreen').addClass('d-flex');
-    $('.categoryselectionscreen').removeClass('d-none');
-
-    bindSelectCategoryClick();
-}
-
 $(document).ready(() => {
     if (window.location.pathname.toLowerCase().includes('app/join')) {
         setTimeout(() => {
             connectionBuild();
         },50)
     }
-
-    $('.startCompetition-admin').on('click', () => {
-        typeof startGame === 'function' && startGame();
-    });
-
-    $('.nextQuestion-admin').on('click', () => {
-        typeof nextQuestion === 'function' && nextQuestion();
-    });
 });
 
 const shuffle = (array) => {
@@ -540,5 +842,3 @@ const shuffle = (array) => {
 
     return array;
 }
-
-

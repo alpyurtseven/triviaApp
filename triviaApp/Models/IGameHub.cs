@@ -21,6 +21,7 @@ namespace triviaApp.Models
         Task SetTime(string time);
         Task ReceiveParticipantsScores(string participantsScores, string nextParticipant);
         Task UpdateParticipants(List<KeyValuePair<string, string>> list);
+        Task ReceiveUIUpdate(string screenName, object info, bool changeScreen);
 
 
         //ADMIN

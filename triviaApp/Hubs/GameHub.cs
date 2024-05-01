@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
 using Newtonsoft.Json;
 using triviaApp.Utils;
+using System.Linq.Expressions;
 
 namespace triviaApp.Hubs
 {
@@ -18,6 +19,12 @@ namespace triviaApp.Hubs
         private static ConcurrentDictionary<string, string> adminList = new ConcurrentDictionary<string, string>();
         private static int _competitionId;
         private static int _questionId;
+        private static bool _gameStarted;
+        private static string _lastScreenName;
+        private static Question _lastSelectedQuestion;
+        private static List<string> _competitionParticipants;
+        private static Competition _competition;
+
 
         private readonly AppDbContext _context;
 
@@ -35,7 +42,7 @@ namespace triviaApp.Hubs
 
             if (existingParticipant != null)
             {
-                await Clients.Caller.Error("Bu kullanıcı adı bu yarışmada zaten kullanılmış.");
+                await Clients.Caller.Error("Bu kullanıcı adı bu yarışmada zaten kayıtlı.");
                 return;
             }
 
@@ -65,7 +72,11 @@ namespace triviaApp.Hubs
 
             await Clients.Caller.JoinGame(username, connectionId);
 
-            await Clients.Group("Participants").UpdateParticipants(clientList.ToList());
+            _lastScreenName = "waitingroom";
+
+            await Clients.Caller.ReceiveUIUpdate("waitingroom", clientList.ToList(), true);
+            await Clients.GroupExcept("Participants", connectionId).ReceiveUIUpdate("waitingroom", clientList.ToList(), false);
+            await Clients.Group("Admins").ReceiveUIUpdate("adminwaitingroom", clientList.ToList(), false);
         }
 
         public async Task SelectCategory(int categoryId, int competitionId, string username)
@@ -112,8 +123,13 @@ namespace triviaApp.Hubs
 
                     await Clients.Group("Participants").SendCategoriesThatHasNoQuestion(categoryId);
                 }
-                
-                await Clients.Group("Participants").PresentQuestion(SerializeObject(question));
+
+                _lastSelectedQuestion = question;
+                _lastScreenName = "question";
+
+                activeQuestions.Clear();
+
+                await Clients.Group("Participants").ReceiveUIUpdate("question",SerializeObject(question), true);
 
                 await StartTimer(question);
 
@@ -166,10 +182,10 @@ namespace triviaApp.Hubs
 
             await Clients.Groups("Admins").UserAnswer(username, answer);
 
-            await CheckAllAnswers(competitionId, questionId, false);
+            await CheckAllAnswers(competitionId, questionId, false, false);
         }
 
-        public async Task CheckAllAnswers(int competitionId, int questionId, bool timeOut)
+        public async Task CheckAllAnswers(int competitionId, int questionId, bool timeOut, bool isReconnect)
         {
             var participantsInQueue = new HashSet<string>(participantQueue);
 
@@ -179,15 +195,24 @@ namespace triviaApp.Hubs
 
             if (activeQuestions.Count >= totalParticipants || timeOut)
             {
+                CountdownTimer.Dispose();
+
                 var correctAnswers = activeQuestions.Where(q => q.Value == questionId).Select(q => q.Key).ToList();
                 var wrongAnswers = activeQuestions.Where(q => q.Value == -1).Select(q => q.Key).ToList();
                 bool isCompetitionOver = await AreCompetitionQuestionsOver();
-              
+
+                _lastScreenName = "questionResults";
+
                 Thread.Sleep(2000);
 
-                await Clients.Group("Participants").QuestionResults(SerializeObject(correctAnswers), SerializeObject(wrongAnswers), isCompetitionOver);
-                
-                activeQuestions.Clear();
+                if (!isReconnect)
+                {
+                    await Clients.Group("Participants").QuestionResults(SerializeObject(correctAnswers), SerializeObject(wrongAnswers), isCompetitionOver);
+                }
+                else
+                {
+                    await Clients.Caller.QuestionResults(SerializeObject(correctAnswers), SerializeObject(wrongAnswers), isCompetitionOver);
+                }
             }
         }
 
@@ -221,7 +246,6 @@ namespace triviaApp.Hubs
 
         public async Task StartTimer(Question question)
         {
-    
             CountdownTimer.OnSecondPassed += (seconds) =>
             {
                 Clients.Group("Participants").SetTime(seconds.ToString());
@@ -234,6 +258,46 @@ namespace triviaApp.Hubs
             };
 
             CountdownTimer.Start(question.Time);
+        }
+
+        public async Task GetLastScreen()
+        {
+            switch (_lastScreenName)
+            {
+                case "question":
+                    Clients.Caller.ReceiveUIUpdate(_lastScreenName, SerializeObject(_lastSelectedQuestion), true);
+                    break;
+                case "questionResults":
+                    Clients.Caller.ReceiveUIUpdate("question", SerializeObject(_lastSelectedQuestion), true);
+
+                    CheckAllAnswers(_competitionId, _questionId, false, true);
+                    break;
+                case "selectcategory":
+                    await Clients.Caller.ReceiveUIUpdate("selectcategory", SerializeObject(_competition), true);
+
+                    UpdateParticipantsScores(_competitionId);
+                    break;
+                case "waitingroom":
+                    if (!Context.User.IsInRole("Admin"))
+                    {
+                        await Clients.Caller.ReceiveUIUpdate("waitingroom", clientList.ToList(), true);
+                    }
+                    else
+                    {
+                        await Clients.Caller.ReceiveUIUpdate("adminwaitingroom", clientList.ToList(), true);
+                    }
+                    break;
+                default:
+                    if (Context.User.IsInRole("Admin"))
+                    {
+                        await Clients.Caller.ReceiveUIUpdate("adminwaitingroom", clientList.ToList(), true);
+                    }
+                    else
+                    {
+                        await Clients.Caller.ReceiveUIUpdate("setusername", new object() { }, true);
+                    }
+                    break;
+            }
         }
 
         /*Admin Functions*/
@@ -257,9 +321,17 @@ namespace triviaApp.Hubs
 
             try
             {
+                _lastScreenName = "selectcategory";
+
                 await Clients.All.StartGame(SerializeObject(competition));
 
+                await Clients.All.ReceiveUIUpdate("selectcategory", SerializeObject(competition), true);
+
                 UpdateParticipantsScores(competitionId);
+
+                _competitionParticipants = (List<string>)clientList.Select(z => z.Key);
+
+                _gameStarted = true;
             }
             catch (Exception e)
             {
@@ -285,34 +357,136 @@ namespace triviaApp.Hubs
 
             await NotifyNextParticipant();
 
+            _lastScreenName = "selectcategory";
+
             Thread.Sleep(1000);
 
             await Clients.Group("Participants").NextQuestion(SerializeObject(competition));
+            await Clients.Group("Participants").ReceiveUIUpdate("selectcategory", SerializeObject(competition), true);
         }
 
+        public async Task ShowResults(int competitionId)
+        {
+            if (!Context.User.IsInRole("Admin"))
+            {
+                await Clients.Caller.Error("Bu işlem için yetkiniz yok.");
+                return;
+            }
+
+            var participantsScores = _context.Scores
+                .AsNoTracking()
+                .Include(s => s.Participant)
+                .Where(z => z.CompetitionId == competitionId).ToList()
+                .Select(s => new { s.Participant.Username, s.Points });
+
+            participantQueue.TryPeek(out string nextParticipant);
+
+            var participantsInQueue = new HashSet<string>(participantQueue);
+
+            var filteredScores = participantsScores
+                .Where(s => participantsInQueue.Contains(s.Username))
+                .ToList();
+
+            await EndCompetition();
+
+            Thread.Sleep(1000);
+
+            await Clients.Group("Participants").ReceiveUIUpdate("seeresults", SerializeObject(filteredScores), true);
+        }
+
+        public async Task EndCompetition()
+        {
+            var competition = await _context.Competitions
+              .FirstOrDefaultAsync(c => c.Id == _competitionId);
+
+            competition.isOver = true;
+
+            await _context.SaveChangesAsync();
+        }
 
         /*Overrides*/
         public override async Task OnConnectedAsync()
         {
             var token = Context.GetHttpContext().Request.Query["token"];
             var id = Context.GetHttpContext().Request.Query["competitionId"];
+            var username = Context.GetHttpContext().Request.Cookies["myUserName"];
+            var userscreen = Context.GetHttpContext().Request.Cookies["currentState"];
+
+            _competition = await _context.Competitions
+                      .AsNoTracking()
+                      .Include(c => c.CompetitionCategories)
+                      .ThenInclude(cc => cc.Category)
+                      .Include(c => c.CompetitionQuestions)
+                      .ThenInclude(cq => cq.Question)
+                      .FirstOrDefaultAsync(c => c.Id == _competitionId);
+
 
             var isAdmin = Context.User.IsInRole("Admin"); 
 
             if (!await ValidateTokenAsync(token, id))
             {
-
                 await Clients.Caller.InvalidToken();
                 return;
             }
 
-            if (isAdmin)
+            if (_context.Competitions.AsNoTracking().Where(z=>z.isOver).FirstOrDefault() != null)
             {
-                adminList.TryAdd(Context.User.Identity.Name, Context.ConnectionId);
+                var participantsScores = _context.Scores
+                    .AsNoTracking()
+                    .Include(s => s.Participant)
+                    .Where(z => z.CompetitionId == id).ToList()
+                    .Select(s => new { s.Participant.Username, s.Points });
 
-                await Groups.AddToGroupAsync(Context.ConnectionId, "Participants");
-                await Groups.AddToGroupAsync(Context.ConnectionId, "Admins");
-                await Clients.Group("Admins").AdminJoined();
+                participantQueue.TryPeek(out string nextParticipant);
+
+                var participantsInQueue = new HashSet<string>(participantQueue);
+
+                var filteredScores = participantsScores
+                    .Where(s => participantsInQueue.Contains(s.Username))
+                    .ToList();
+
+                await Clients.Caller.ReceiveUIUpdate("seeresults", SerializeObject(filteredScores), true);
+            }
+            else
+            {
+                if (isAdmin)
+                {
+                    adminList.TryAdd(Context.User.Identity.Name, Context.ConnectionId);
+
+                    await Groups.AddToGroupAsync(Context.ConnectionId, "Participants");
+                    await Groups.AddToGroupAsync(Context.ConnectionId, "Admins");
+                    await Clients.Group("Admins").AdminJoined();
+
+                    if (userscreen == null && !_gameStarted)
+                    {
+                        await Clients.Caller.ReceiveUIUpdate("adminwaitingroom", new object() { }, true);
+                    }
+                    else 
+                    {
+                        GetLastScreen();
+                    }
+                }
+                else if (username == null && !_gameStarted)
+                {
+                    await Clients.Caller.ReceiveUIUpdate("setusername", new object() { }, true);
+                } else
+                {
+                    if (username != null && !_gameStarted)
+                    {
+                        clientList.TryAdd(username, Context.ConnectionId);
+
+                        await Clients.Group("Participants").UpdateParticipants(clientList.ToList());
+                    }
+
+                    GetLastScreen();
+                }
+
+
+                if (_gameStarted && !isAdmin)
+                {
+                    await Clients.Caller.InvalidToken();
+                    return;
+                }
             }
 
             await base.OnConnectedAsync();

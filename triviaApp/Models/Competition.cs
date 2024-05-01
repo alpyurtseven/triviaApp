@@ -12,6 +12,7 @@ namespace triviaApp.Models
 
         public string JoinLink { get; set; }
 
+        public bool isOver { get; set; } = false;
 
         public ICollection<Participant> Participants { get; set; }
         public ICollection<Score> Scores { get; set; }

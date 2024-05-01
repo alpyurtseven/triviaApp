@@ -5,7 +5,7 @@
 namespace triviaApp.Migrations
 {
     /// <inheritdoc />
-    public partial class seedUser : Migration
+    public partial class seedAdmin : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -18,7 +18,7 @@ namespace triviaApp.Migrations
             migrationBuilder.InsertData(
                 table: "AspNetUsers",
                 columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "Email", "EmailConfirmed", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "Status", "TwoFactorEnabled", "UserName" },
-                values: new object[] { "02174cf0–9412–4cfe-afbf-59f706d72cf6", 0, "2ea51416-002e-41d1-aea3-bdb9e73630eb", "admin@admin.com.tr", true, false, null, null, "ADMIN", "AQAAAAIAAYagAAAAEEdsSk6y5R4Qq8IF+nVqlb/rqO+2QqQ4SPFz1jxGA+qGOEbkQRedW+ArR14yfEvL0g==", null, false, "88a65315-0dfa-4036-9b1b-30b74ad2085b", (byte)1, false, "admin" });
+                values: new object[] { "02174cf0–9412–4cfe-afbf-59f706d72cf6", 0, "5b315a26-ce47-4d11-9659-0d3261def5da", "admin@admin.com.tr", true, false, null, null, "ADMIN", "AQAAAAIAAYagAAAAEO0WYl6khRgYL7fmK2Fqwsg9kNMHgvwU+RXau9s5WHwSWBXwDLslhgMue6xQhgNPtQ==", null, false, "bbe0bf5e-ff7d-48c1-b53b-04d507c98763", (byte)1, false, "admin" });
 
             migrationBuilder.InsertData(
                 table: "AspNetUserRoles",

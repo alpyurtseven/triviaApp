@@ -12,8 +12,8 @@ using triviaApp.Models;
 namespace triviaApp.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20240421093034_competitionRelation")]
-    partial class competitionRelation
+    [Migration("20240501114716_seedAdmin")]
+    partial class seedAdmin
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -50,6 +50,15 @@ namespace triviaApp.Migrations
                         .HasFilter("[NormalizedName] IS NOT NULL");
 
                     b.ToTable("AspNetRoles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = "341743f0-asd2–42de-afbf-59kmkkmk72cf6",
+                            ConcurrencyStamp = "341743f0-asd2–42de-afbf-59kmkkmk72cf6",
+                            Name = "Admin",
+                            NormalizedName = "ADMIN"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -137,6 +146,13 @@ namespace triviaApp.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetUserRoles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = "02174cf0–9412–4cfe-afbf-59f706d72cf6",
+                            RoleId = "341743f0-asd2–42de-afbf-59kmkkmk72cf6"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
@@ -166,16 +182,11 @@ namespace triviaApp.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("CompetitionId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CompetitionId");
 
                     b.ToTable("Categories");
                 });
@@ -196,9 +207,67 @@ namespace triviaApp.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("isOver")
+                        .HasColumnType("bit");
+
                     b.HasKey("Id");
 
                     b.ToTable("Competitions");
+                });
+
+            modelBuilder.Entity("triviaApp.Models.CompetitionCategory", b =>
+                {
+                    b.Property<int>("CompetitionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.HasKey("CompetitionId", "CategoryId");
+
+                    b.HasIndex("CategoryId");
+
+                    b.ToTable("CompetitionCategory");
+                });
+
+            modelBuilder.Entity("triviaApp.Models.CompetitionQuestion", b =>
+                {
+                    b.Property<int>("CompetitionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("CompetitionId", "QuestionId");
+
+                    b.HasIndex("QuestionId");
+
+                    b.ToTable("CompetitionQuestion");
+                });
+
+            modelBuilder.Entity("triviaApp.Models.Participant", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CompetitionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompetitionId");
+
+                    b.HasIndex("Username", "CompetitionId")
+                        .IsUnique();
+
+                    b.ToTable("Participants");
                 });
 
             modelBuilder.Entity("triviaApp.Models.Question", b =>
@@ -216,15 +285,18 @@ namespace triviaApp.Migrations
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("CompetitionId")
+                    b.Property<int>("Difficulty")
                         .HasColumnType("int");
 
-                    b.Property<int>("Difficulty")
+                    b.Property<int>("Points")
                         .HasColumnType("int");
 
                     b.Property<string>("RightAnswer")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Time")
+                        .HasColumnType("int");
 
                     b.Property<string>("WrongAnswer1")
                         .IsRequired()
@@ -242,9 +314,33 @@ namespace triviaApp.Migrations
 
                     b.HasIndex("CategoryId");
 
+                    b.ToTable("Questions");
+                });
+
+            modelBuilder.Entity("triviaApp.Models.Score", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CompetitionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ParticipantId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
                     b.HasIndex("CompetitionId");
 
-                    b.ToTable("Questions");
+                    b.HasIndex("ParticipantId");
+
+                    b.ToTable("Scores");
                 });
 
             modelBuilder.Entity("triviaApp.Models.User", b =>
@@ -313,6 +409,24 @@ namespace triviaApp.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = "02174cf0–9412–4cfe-afbf-59f706d72cf6",
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "5b315a26-ce47-4d11-9659-0d3261def5da",
+                            Email = "admin@admin.com.tr",
+                            EmailConfirmed = true,
+                            LockoutEnabled = false,
+                            NormalizedUserName = "ADMIN",
+                            PasswordHash = "AQAAAAIAAYagAAAAEO0WYl6khRgYL7fmK2Fqwsg9kNMHgvwU+RXau9s5WHwSWBXwDLslhgMue6xQhgNPtQ==",
+                            PhoneNumberConfirmed = false,
+                            SecurityStamp = "bbe0bf5e-ff7d-48c1-b53b-04d507c98763",
+                            Status = (byte)1,
+                            TwoFactorEnabled = false,
+                            UserName = "admin"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -366,11 +480,53 @@ namespace triviaApp.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("triviaApp.Models.Category", b =>
+            modelBuilder.Entity("triviaApp.Models.CompetitionCategory", b =>
                 {
-                    b.HasOne("triviaApp.Models.Competition", null)
-                        .WithMany("Categories")
-                        .HasForeignKey("CompetitionId");
+                    b.HasOne("triviaApp.Models.Category", "Category")
+                        .WithMany("CompetitionCategories")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("triviaApp.Models.Competition", "Competition")
+                        .WithMany("CompetitionCategories")
+                        .HasForeignKey("CompetitionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Competition");
+                });
+
+            modelBuilder.Entity("triviaApp.Models.CompetitionQuestion", b =>
+                {
+                    b.HasOne("triviaApp.Models.Competition", "Competition")
+                        .WithMany("CompetitionQuestions")
+                        .HasForeignKey("CompetitionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("triviaApp.Models.Question", "Question")
+                        .WithMany("CompetitionQuestions")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Competition");
+
+                    b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("triviaApp.Models.Participant", b =>
+                {
+                    b.HasOne("triviaApp.Models.Competition", "Competition")
+                        .WithMany("Participants")
+                        .HasForeignKey("CompetitionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Competition");
                 });
 
             modelBuilder.Entity("triviaApp.Models.Question", b =>
@@ -381,23 +537,54 @@ namespace triviaApp.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("triviaApp.Models.Competition", null)
-                        .WithMany("Questions")
-                        .HasForeignKey("CompetitionId");
-
                     b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("triviaApp.Models.Score", b =>
+                {
+                    b.HasOne("triviaApp.Models.Competition", "Competition")
+                        .WithMany("Scores")
+                        .HasForeignKey("CompetitionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("triviaApp.Models.Participant", "Participant")
+                        .WithMany("Scores")
+                        .HasForeignKey("ParticipantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Competition");
+
+                    b.Navigation("Participant");
                 });
 
             modelBuilder.Entity("triviaApp.Models.Category", b =>
                 {
+                    b.Navigation("CompetitionCategories");
+
                     b.Navigation("Questions");
                 });
 
             modelBuilder.Entity("triviaApp.Models.Competition", b =>
                 {
-                    b.Navigation("Categories");
+                    b.Navigation("CompetitionCategories");
 
-                    b.Navigation("Questions");
+                    b.Navigation("CompetitionQuestions");
+
+                    b.Navigation("Participants");
+
+                    b.Navigation("Scores");
+                });
+
+            modelBuilder.Entity("triviaApp.Models.Participant", b =>
+                {
+                    b.Navigation("Scores");
+                });
+
+            modelBuilder.Entity("triviaApp.Models.Question", b =>
+                {
+                    b.Navigation("CompetitionQuestions");
                 });
 #pragma warning restore 612, 618
         }

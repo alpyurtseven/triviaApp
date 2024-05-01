@@ -204,6 +204,9 @@ namespace triviaApp.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("isOver")
+                        .HasColumnType("bit");
+
                     b.HasKey("Id");
 
                     b.ToTable("Competitions");
@@ -409,14 +412,14 @@ namespace triviaApp.Migrations
                         {
                             Id = "02174cf0–9412–4cfe-afbf-59f706d72cf6",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "2ea51416-002e-41d1-aea3-bdb9e73630eb",
+                            ConcurrencyStamp = "5b315a26-ce47-4d11-9659-0d3261def5da",
                             Email = "admin@admin.com.tr",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEEdsSk6y5R4Qq8IF+nVqlb/rqO+2QqQ4SPFz1jxGA+qGOEbkQRedW+ArR14yfEvL0g==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEO0WYl6khRgYL7fmK2Fqwsg9kNMHgvwU+RXau9s5WHwSWBXwDLslhgMue6xQhgNPtQ==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "88a65315-0dfa-4036-9b1b-30b74ad2085b",
+                            SecurityStamp = "bbe0bf5e-ff7d-48c1-b53b-04d507c98763",
                             Status = (byte)1,
                             TwoFactorEnabled = false,
                             UserName = "admin"
