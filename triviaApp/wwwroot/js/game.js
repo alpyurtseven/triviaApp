@@ -363,12 +363,10 @@ const updateAppState = (state, info) => {
 
     switch (state) {
         case 'loader':
-            document.cookie = 'currentState=loader;path=/';
             localStorage.setItem('currentState', 'loader');
             mainContainer.innerHTML = getLoader();
             break;
         case 'setusername':
-            document.cookie = 'currentState=setusername;path=/';
             localStorage.setItem('currentState', 'setusername');
             mainContainer.innerHTML = getSetUserNameScreen();
 
@@ -387,19 +385,16 @@ const updateAppState = (state, info) => {
             });
             break;
         case 'selectcategory':
-            document.cookie = 'currentState=selectcategory;path=/';
             localStorage.setItem('currentState', 'selectcategory');
             mainContainer.innerHTML = getCategorySelectionScreen(info);
 
             bindSelectCategoryClick();
             break;
         case 'waitingroom':
-            document.cookie = 'currentState=waitingroom;path=/';
             localStorage.setItem('currentState', 'waitingroom');
             mainContainer.innerHTML = getWaitingRoomScreen(info);
             break;
         case 'question':
-            document.cookie = 'currentState=question;path=/';
             localStorage.setItem('currentState', 'question');
             mainContainer.innerHTML = getQuestionScreen(info);
 
@@ -408,7 +403,6 @@ const updateAppState = (state, info) => {
             bindAnswerClick();
             break;
         case 'adminwaitingroom':
-            document.cookie = 'currentState=adminwaitingroom;path=/';
             localStorage.setItem('currentState', 'adminwaitingroom');
             mainContainer.innerHTML = getAdminWaitingroomScreen(info);
 
@@ -417,7 +411,6 @@ const updateAppState = (state, info) => {
             });
             break;
         case 'seeresults':
-            document.cookie = 'currentState=seeresults;path=/';
             localStorage.setItem('currentState', 'seeresults');
             mainContainer.innerHTML = getSeeResultsScreen(info);
             break;
@@ -501,6 +494,7 @@ const startConnection = async () => {
             onDisconnect();
             onLastWinners();
             onLeaders();
+            onEndGame();
         });
     } catch {
         setTimeout(() => startConnection(), 2000);
@@ -771,6 +765,13 @@ const onEndTime = () => {
     });
 }
 
+const onEndGame = () => {
+    connection.on("EndGame", (time) => {
+        deleteCookie("myUserName");
+    });
+}
+
+
 const onSendCategoriesThatHasNoQuestion = () => {
     connection.on("SendCategoriesThatHasNoQuestion", (categoryId) => {
         const categoriesThatHasNoQuestion = JSON.parse(localStorage.getItem('categoriesThatHasNoQuestion') || '[]') || [];
@@ -941,17 +942,28 @@ $(document).ready(() => {
 const shuffle = (array) => {
     let currentIndex = array.length;
 
-    // While there remain elements to shuffle...
     while (currentIndex != 0) {
 
-        // Pick a remaining element...
         let randomIndex = Math.floor(Math.random() * currentIndex);
         currentIndex--;
 
-        // And swap it with the current element.
         [array[currentIndex], array[randomIndex]] = [
             array[randomIndex], array[currentIndex]];
     }
 
     return array;
+}
+
+const deleteCookie = (name, path) => {
+    if (getCookie(name)) {
+        document.cookie = name + "=" +
+            ((path) ? ";path=" + path : "") +
+            ";expires=Thu, 01 Jan 1970 00:00:01 GMT";
+    }
+}
+
+function getCookie(name) {
+    return document.cookie.split(';').some(c => {
+        return c.trim().startsWith(name + '=');
+    });
 }

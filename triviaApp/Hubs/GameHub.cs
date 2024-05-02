@@ -455,6 +455,8 @@ namespace triviaApp.Hubs
 
             await _context.SaveChangesAsync();
 
+            await Clients.Group("Participants").EndGame();
+
 
             //RESET STATIC VARIABLES FOR NEXT COMPETITION
             participantQueue.Clear();
