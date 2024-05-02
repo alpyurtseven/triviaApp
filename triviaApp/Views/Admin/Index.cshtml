@@ -1,8 +1,65 @@
 ﻿@{
     ViewData["Title"] = "Admin Home Page";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    int count = 0;
 }
+@model DashboardViewModel
 
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
+<div class="mt-5">
+    <div class="d-flex flex-row justify-content-around mb-5">
+        <div class="lastCompetitions">
+            <div>
+                <h1>Son yarışmalar</h1>
+            </div>
+            <hr />
+            <ul class="list-group list-group-flush ">
+                @foreach (var item in Model.CompetitonNames)
+                {
+                    <li class="list-group-item list-group-item-secondary">@item</li>
+                }
+            </ul>
+        </div>
+        <div class="lastWinners">
+            <div>
+                <h1>Son kazananlar</h1>
+            </div>
+            <hr />
+            <ul class="list-group list-group-flush ">
+                @foreach (var item in Model.LastWinners)
+                {
+
+                    <li class="list-group-item d-flex flex-column list-group-item-success"><span>Yarışmacı: @item.Name</span><span>Puan: @item.Points</span></li>
+                }
+            </ul>
+        </div>
+        <div class="highestScores">
+            <div>
+                <h1>En yüksek skorlar</h1>
+            </div>
+            <hr />
+            <ul class="list-group list-group-flush ">
+
+                @foreach (var item in Model.Leaders)
+                    {
+
+                        List<string> colors = new() { "list-group-item-success", "list-group-item-primary", "list-group-item-warning" };
+                        string leader = colors[0];
+
+                        if (count > 3)
+                        {
+                            leader = colors[2];
+                            count++;
+                        }
+                        else if (count > 0)
+                        {
+                            leader = colors[1];
+                        }
+
+                        count = count + 1;
+
+                    <li class="list-group-item d-flex flex-column @leader"><span>Yarışmacı: @item.Name</span><span>Puan: @item.Points</span></li>
+                }
+            </ul>
+        </div>
+    </div>
 </div>

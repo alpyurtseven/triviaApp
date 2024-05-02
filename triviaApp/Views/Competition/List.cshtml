@@ -28,7 +28,7 @@
                 <tr>
                     <td>@item.Id</td>
                     <td>@item.Name</td>
-                    <td>@item.JoinLink</td>
+                    <td class="joinLink" style="cursor:copy">@item.JoinLink</td>
                     <td>
                         <a href="/competition/details/@item.Id" class="btn btn-warning btn-circle btn-sm">
                             <i class="fas fa-edit"></i>
@@ -38,7 +38,7 @@
                             <i class="fas fa-trash"></i>
                         </a>
 
-                        <a href="/competition/details/@item.Id" class="btn btn-success btn-circle btn-sm">
+                        <a href="/competition/recreate/@item.Id" class="btn btn-success btn-circle btn-sm">
                             <i class="fas fa-redo"></i>
                         </a>
 
@@ -91,6 +91,12 @@
                     }
                 });
             }
+        });
+
+        $('.joinLink').on("click", (e) => {
+            var copyText = $(e.currentTarget).text().trim()
+
+            navigator.clipboard.writeText(copyText);
         });
     });
 </script>

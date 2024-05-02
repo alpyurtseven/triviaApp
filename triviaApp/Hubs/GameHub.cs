@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using Newtonsoft.Json;
 using triviaApp.Utils;
 using System.Linq.Expressions;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace triviaApp.Hubs
 {
@@ -20,18 +21,21 @@ namespace triviaApp.Hubs
         private static int _competitionId;
         private static int _questionId;
         private static bool _gameStarted;
-        private static string _lastScreenName;
+        private static string _lastScreenName = null;
         private static Question _lastSelectedQuestion;
         private static List<string> _competitionParticipants;
         private static Competition _competition;
 
 
+        private readonly IServiceScopeFactory _serviceProvider;
         private readonly AppDbContext _context;
 
-        public GameHub(AppDbContext context)
+        public GameHub(AppDbContext context, IServiceScopeFactory serviceProvider)
 		{
             _context = context;
-		}
+            _serviceProvider = serviceProvider;
+
+        }
 
         public async Task SetUsername(string username, int competitionId)
         {
@@ -71,8 +75,6 @@ namespace triviaApp.Hubs
             await Groups.AddToGroupAsync(connectionId, "Participants");
 
             await Clients.Caller.JoinGame(username, connectionId);
-
-            _lastScreenName = "waitingroom";
 
             await Clients.Caller.ReceiveUIUpdate("waitingroom", clientList.ToList(), true);
             await Clients.GroupExcept("Participants", connectionId).ReceiveUIUpdate("waitingroom", clientList.ToList(), false);
@@ -125,6 +127,7 @@ namespace triviaApp.Hubs
                 }
 
                 _lastSelectedQuestion = question;
+
                 _lastScreenName = "question";
 
                 activeQuestions.Clear();
@@ -188,12 +191,35 @@ namespace triviaApp.Hubs
         public async Task CheckAllAnswers(int competitionId, int questionId, bool timeOut, bool isReconnect)
         {
             var participantsInQueue = new HashSet<string>(participantQueue);
+            int totalParticipants = 999;
 
-            var totalParticipants = await _context.Participants
-                .Where(p => p.CompetitionId == competitionId && participantsInQueue.Contains(p.Username))
-                .CountAsync();
+            if (isReconnect)
+            {
+                var longRunningScope = _serviceProvider.CreateScope();
+                Task.Run(async () => {
+                    try
+                    {
+                        var context = longRunningScope.ServiceProvider.GetRequiredService<AppDbContext>();
+                        totalParticipants = await context.Participants
+                          .Where(p => p.CompetitionId == competitionId && participantsInQueue.Contains(p.Username))
+                          .CountAsync();
+                    }
+                    finally
+                    {
+                        longRunningScope.Dispose();
+                    }
+                }).Wait();
+            }
+            else
+            {
+                 totalParticipants = await _context.Participants
+                    .Where(p => p.CompetitionId == competitionId && participantsInQueue.Contains(p.Username))
+                    .CountAsync();
+            }
 
-            if (activeQuestions.Count >= totalParticipants || timeOut)
+
+          
+            if (activeQuestions.Count >= totalParticipants || timeOut || isReconnect)
             {
                 CountdownTimer.Dispose();
 
@@ -201,12 +227,13 @@ namespace triviaApp.Hubs
                 var wrongAnswers = activeQuestions.Where(q => q.Value == -1).Select(q => q.Key).ToList();
                 bool isCompetitionOver = await AreCompetitionQuestionsOver();
 
-                _lastScreenName = "questionResults";
-
-                Thread.Sleep(2000);
-
                 if (!isReconnect)
                 {
+                   
+                    _lastScreenName = "questionResults";
+
+                    Thread.Sleep(2000);
+
                     await Clients.Group("Participants").QuestionResults(SerializeObject(correctAnswers), SerializeObject(wrongAnswers), isCompetitionOver);
                 }
                 else
@@ -300,6 +327,31 @@ namespace triviaApp.Hubs
             }
         }
 
+        public async Task GetLastWinner()
+        {
+           var lastWinners=  _context.Scores.AsNoTracking()
+               .Include(s => s.Participant)
+               .AsEnumerable()
+               .GroupBy(s => s.CompetitionId)
+               .Take(10)
+               .Select(g => g.OrderByDescending(s => s.Points).FirstOrDefault())
+               .Select(s => new NameAndScore
+               {
+                   Name = s.Participant.Username,
+                   Points = s.Points
+               })
+               .ToList();
+
+            await Clients.Caller.LastWinners(SerializeObject(lastWinners));
+        }
+
+        public async Task GetLeaders()
+        {
+            var leaders = await _context.Scores.AsNoTracking().Include(z => z.Participant).OrderByDescending(z => z.Points).Take(10).Select(z => new NameAndScore() { Name = z.Participant.Username, Points = z.Points }).ToListAsync();
+
+            await Clients.Caller.Leaders(SerializeObject(leaders));
+        }
+
         /*Admin Functions*/
         public async Task StartGame(int competitionId)
         {
@@ -311,7 +363,7 @@ namespace triviaApp.Hubs
 
             _competitionId = competitionId;
 
-            var competition = await _context.Competitions
+            _competition = await _context.Competitions
             .AsNoTracking()
             .Include(c => c.CompetitionCategories)
             .ThenInclude(cc => cc.Category)
@@ -323,9 +375,9 @@ namespace triviaApp.Hubs
             {
                 _lastScreenName = "selectcategory";
 
-                await Clients.All.StartGame(SerializeObject(competition));
+                await Clients.All.StartGame(SerializeObject(_competition));
 
-                await Clients.All.ReceiveUIUpdate("selectcategory", SerializeObject(competition), true);
+                await Clients.All.ReceiveUIUpdate("selectcategory", SerializeObject(_competition), true);
 
                 UpdateParticipantsScores(competitionId);
 
@@ -387,11 +439,11 @@ namespace triviaApp.Hubs
                 .Where(s => participantsInQueue.Contains(s.Username))
                 .ToList();
 
-            await EndCompetition();
-
             Thread.Sleep(1000);
 
             await Clients.Group("Participants").ReceiveUIUpdate("seeresults", SerializeObject(filteredScores), true);
+
+            await EndCompetition();
         }
 
         public async Task EndCompetition()
@@ -402,24 +454,31 @@ namespace triviaApp.Hubs
             competition.isOver = true;
 
             await _context.SaveChangesAsync();
-        }
 
-        /*Overrides*/
-        public override async Task OnConnectedAsync()
+
+            //RESET STATIC VARIABLES FOR NEXT COMPETITION
+            participantQueue.Clear();
+            clientList.Clear();
+            clientList.Clear();
+            categoryQuestions.Clear();
+            activeQuestions.Clear();
+            removedCategoryIds.Clear();
+
+            _competitionId = 0;
+            _questionId = 0;
+            _gameStarted = false;
+            _competitionParticipants.Clear();
+            _lastScreenName = null;
+            _lastSelectedQuestion = null;
+            _competition = null;
+    }
+
+    /*Overrides*/
+    public override async Task OnConnectedAsync()
         {
             var token = Context.GetHttpContext().Request.Query["token"];
             var id = Context.GetHttpContext().Request.Query["competitionId"];
             var username = Context.GetHttpContext().Request.Cookies["myUserName"];
-            var userscreen = Context.GetHttpContext().Request.Cookies["currentState"];
-
-            _competition = await _context.Competitions
-                      .AsNoTracking()
-                      .Include(c => c.CompetitionCategories)
-                      .ThenInclude(cc => cc.Category)
-                      .Include(c => c.CompetitionQuestions)
-                      .ThenInclude(cq => cq.Question)
-                      .FirstOrDefaultAsync(c => c.Id == _competitionId);
-
 
             var isAdmin = Context.User.IsInRole("Admin"); 
 
@@ -429,23 +488,26 @@ namespace triviaApp.Hubs
                 return;
             }
 
-            if (_context.Competitions.AsNoTracking().Where(z=>z.isOver).FirstOrDefault() != null)
+            if (_context.Competitions.AsNoTracking().Where(z=>z.isOver && z.Id == Int32.Parse(id.First())).FirstOrDefault() != null)
             {
-                var participantsScores = _context.Scores
+                object participantsScores = null;
+
+                try
+                {
+                    participantsScores = _context.Scores
                     .AsNoTracking()
                     .Include(s => s.Participant)
-                    .Where(z => z.CompetitionId == id).ToList()
+                    .Where(z => z.CompetitionId == Int32.Parse(id.First())).ToList()
                     .Select(s => new { s.Participant.Username, s.Points });
+                }
+                catch (Exception e)
+                {
+                    Console.Write(e.Message);
+                }
+              
 
-                participantQueue.TryPeek(out string nextParticipant);
-
-                var participantsInQueue = new HashSet<string>(participantQueue);
-
-                var filteredScores = participantsScores
-                    .Where(s => participantsInQueue.Contains(s.Username))
-                    .ToList();
-
-                await Clients.Caller.ReceiveUIUpdate("seeresults", SerializeObject(filteredScores), true);
+                await Clients.Caller.ReceiveUIUpdate("seeresults", SerializeObject(participantsScores), true);
+                await Clients.Caller.Disconnect();
             }
             else
             {
@@ -457,35 +519,37 @@ namespace triviaApp.Hubs
                     await Groups.AddToGroupAsync(Context.ConnectionId, "Admins");
                     await Clients.Group("Admins").AdminJoined();
 
-                    if (userscreen == null && !_gameStarted)
+                    if (_lastScreenName == null)
                     {
-                        await Clients.Caller.ReceiveUIUpdate("adminwaitingroom", new object() { }, true);
+                        _lastScreenName = "waitingroom";
+                        await Clients.Caller.ReceiveUIUpdate("adminwaitingroom", clientList.ToList(), true);
                     }
                     else 
                     {
-                        GetLastScreen();
+                        await GetLastScreen();
                     }
                 }
-                else if (username == null && !_gameStarted)
+                else
                 {
-                    await Clients.Caller.ReceiveUIUpdate("setusername", new object() { }, true);
-                } else
-                {
-                    if (username != null && !_gameStarted)
+                    if (username == null && (_lastScreenName == "waitingroom" || _lastScreenName == null))
+                    {
+                        await Clients.Caller.ReceiveUIUpdate("setusername", new object() { }, true);
+                    }else if (username != null)
                     {
                         clientList.TryAdd(username, Context.ConnectionId);
+                        participantQueue.Enqueue(username);
 
+                        await Groups.AddToGroupAsync(Context.ConnectionId, "Participants");
+                        await Clients.Caller.RecieveUserInfo(username, Context.ConnectionId);
                         await Clients.Group("Participants").UpdateParticipants(clientList.ToList());
+
+                        await GetLastScreen();
                     }
-
-                    GetLastScreen();
-                }
-
-
-                if (_gameStarted && !isAdmin)
-                {
-                    await Clients.Caller.InvalidToken();
-                    return;
+                    else
+                    {
+                        await Clients.Caller.InvalidToken();
+                        return;
+                    }
                 }
             }
 
@@ -496,7 +560,7 @@ namespace triviaApp.Hubs
         {
             string connectionId = Context.ConnectionId;
             string userName = clientList.Where(entry => entry.Value == connectionId)
-              .Select(entry => entry.Key).FirstOrDefault();
+              .Select(entry => entry.Key).FirstOrDefault() ?? "";
 
             clientList.TryRemove(userName, out _);
 
@@ -523,16 +587,7 @@ namespace triviaApp.Hubs
 
         private async Task<bool> AreCompetitionQuestionsOver()
         {
-            var competition = await _context.Competitions
-             .AsNoTracking()
-             .Include(c => c.CompetitionCategories)
-             .ThenInclude(cc => cc.Category)
-             .Include(c => c.CompetitionQuestions)
-             .ThenInclude(cq => cq.Question)
-             .FirstOrDefaultAsync(c => c.Id == _competitionId);
-
-
-            return competition.CompetitionCategories.Count() == removedCategoryIds.Count(); ;
+            return _competition.CompetitionCategories.Count() == removedCategoryIds.Count(); ;
         }
 
         private string SerializeObject(object obj)

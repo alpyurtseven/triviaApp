@@ -1,6 +1,50 @@
 ﻿window.competitionId = Number(window.location.search.split('competitionId=').slice(-1)[0].split('&')[0]);
 
 /*HTML TEMPLATES*/
+const getStatModal = (statName, data) => {
+    data = JSON.parse(data);
+    const colors = ["list-group-item-success", "list-group-item-primary", "list-group-item-warning"];
+    let leader = colors[0];
+
+    const statList = data.map((item, index) => {
+        if (index > 3) {
+            leader = colors[2];
+        } else if (index > 1) {
+            leader = colors[1];
+        }
+
+        return `<li class="list-group-item d-flex flex-column ${leader}"><span>Yarışmacı: ${item.Name}</span><span>Puan: ${item.Points}</span></li>` 
+    })
+
+    return `<div class="modal fade" id="statModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">${statName}</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                     <div class="highestScores">
+                 <div>
+ 
+            </div>
+            <hr />
+            <ul class="list-group list-group-flush ">
+                ${(statList || []).join('')}
+            </ul>
+        </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Kapat</button>
+                </div>
+            </div>
+        </div>
+    </div>`
+}
+
 const getLoader = () => {
     return `<div bis_skin_checked="1">
         <div class="spinner-grow text-primary" role="status" bis_skin_checked="1">
@@ -46,14 +90,14 @@ const getSetUserNameScreen = () => {
                     <span class="text">Yarışmaya Katıl</span>
                 </button>
 
-                <button class="btn btn-info btn-icon-split mt-3 w-100 justify-content-start">
+                <button class="btn btn-info btn-icon-split getLastWinners mt-3 w-100 justify-content-start">
                     <span class="icon text-white-50">
                         <i class="fas fa-trophy"></i>
                     </span>
                     <span class="text">Son Kazananlar</span>
                 </button>
 
-                <button class="btn btn-warning btn-icon-split mt-3 w-100 justify-content-start">
+                <button class="btn btn-warning btn-icon-split getLeaders mt-3 w-100 justify-content-start">
                     <span class="icon text-white-50">
                         <i class="fas fa-crown"></i>
                     </span>
@@ -216,7 +260,7 @@ const getQuestionScreen = (question) => {
                     <span>Puan Değeri:  ${question.Points}</span>
                 </div>
 
-                <div class="questionbody rounded border p-5" style="min-height:200px">
+                <div class="questionbody rounded border p-5" style="min-height:200px; min-width:75vh">
                     <span>${question.Body}</span>
                 </div>
 
@@ -327,6 +371,14 @@ const updateAppState = (state, info) => {
             document.cookie = 'currentState=setusername;path=/';
             localStorage.setItem('currentState', 'setusername');
             mainContainer.innerHTML = getSetUserNameScreen();
+
+            $('.getLastWinners').off('click').on('click', () => {
+                getLastWinners();
+            });
+
+            $('.getLeaders').off('click').on('click', () => {
+                getLeaders();
+            });
 
             $('.startCompetition').off('click').on('click', () => {
                 const username = ($('#username').val() || '').trim();
@@ -444,7 +496,11 @@ const startConnection = async () => {
             onAdminJoined();
             onUserAnswer()
             onQuestionTimeEnded();
+            onRecieveUserInfo();
             onReceiveUIUpdate();
+            onDisconnect();
+            onLastWinners();
+            onLeaders();
         });
     } catch {
         setTimeout(() => startConnection(), 2000);
@@ -477,6 +533,46 @@ const answerQuestion = (username, questionid, answer, competitionId) => {
     });
 }
 
+const getLastWinners = (username, questionid, answer, competitionId) => {
+    window.connection.invoke("GetLastWinner").then((response) => {
+    }).catch(function (err) {
+        return console.error(err.toString());
+    });
+}
+
+const getLeaders= (username, questionid, answer, competitionId) => {
+    window.connection.invoke("GetLeaders").then((response) => {
+    }).catch(function (err) {
+        return console.error(err.toString());
+    });
+}
+
+const onLastWinners = (username, questionid, answer, competitionId) => {
+    connection.on("LastWinners", (lastWinners) => {
+        const lastWinnersModal = getStatModal("Son kazananlar", lastWinners);
+
+        $('body').append(lastWinnersModal);
+        $('#statModal').modal('show');
+
+        $('#statModal').on('hidden.bs.modal', function () {
+            $('#statModal').remove();
+        });
+    });
+}
+
+const onLeaders = (username, questionid, answer, competitionId) => {
+    connection.on("Leaders", (leaders) => {
+        const leadersModal = getStatModal("En yüksek skorlar", leaders);
+
+        $('body').append(leadersModal);
+        $('#statModal').modal('show');
+
+        $('#statModal').on('hidden.bs.modal', function () {
+            $('#statModal').remove();
+        });
+    });
+}
+
 const onAdminJoined = () => {
     connection.on("AdminJoined", () => {
         $('.onlyAdmin').removeClass('d-none');
@@ -487,6 +583,24 @@ const onAdminJoined = () => {
 
 const onJoinGame = () => {
     connection.on("JoinGame", (username, connectionId) => {
+        window.user = {
+            username: username,
+            connectionId: connectionId
+        }
+    });
+}
+
+
+const onDisconnect = () => {
+    connection.on("Disconnect", (username, connectionId) => {
+        connection.stop().then(() => {
+            $('.connectionAlert').remove()
+        })
+    });
+}
+
+const onRecieveUserInfo = () => {
+    connection.on("RecieveUserInfo", (username, connectionId) => {
         window.user = {
             username: username,
             connectionId: connectionId
@@ -763,7 +877,6 @@ const nextQuestion = () => {
 
 const showResults = () => {
     window.connection.invoke("ShowResults", window.competitionId).then((response) => {
-        console.log('Next question invoked');
     }).catch(function (err) {
         return console.error(err.toString());
     });

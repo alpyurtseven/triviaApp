@@ -22,6 +22,10 @@ namespace triviaApp.Models
         Task ReceiveParticipantsScores(string participantsScores, string nextParticipant);
         Task UpdateParticipants(List<KeyValuePair<string, string>> list);
         Task ReceiveUIUpdate(string screenName, object info, bool changeScreen);
+        Task RecieveUserInfo(string username, string connectionId);
+        Task Disconnect();
+        Task LastWinners(string lastWinners);
+        Task Leaders(string leaders);
 
 
         //ADMIN
